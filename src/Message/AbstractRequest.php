@@ -6,12 +6,12 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
-use Omnipay\Common\Exception\InvalidResponseException;
+use Nyehandel\Omnipay\Swish\Exception\SwishException;
 use GuzzleHttp\Exception\ClientException;
 
 abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
 {
-    const API_VERSION = 'v1';
+    protected $API_VERSION = 'v2';
 
     protected $liveEndpoint = 'https://cpc.getswish.net/swish-cpcapi/api';
     protected $testEndpoint = 'https://mss.cpc.getswish.net/swish-cpcapi/api';
@@ -71,6 +71,16 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
         return $this->getParameter('payeeAlias');
     }
 
+    public function setMessage($value)
+    {
+        return $this->setParameter('message', $value);
+    }
+
+    public function getMessage()
+    {
+        return $this->getParameter('message');
+    }
+
     public function setPayeeAlias($value)
     {
         return $this->setParameter('payeeAlias', $value);
@@ -85,86 +95,67 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
     {
         $url = $this->getTestMode() ? $this->testEndpoint : $this->liveEndpoint;
 
-        return $url . '/' . self::API_VERSION;
+        return $url . '/' . $this->API_VERSION;
     }
 
     public function getData()
     {
         $this->validate('notifyUrl', 'amount', 'currency', 'payeeAlias');
 
-        $data = array(
+        $data = [
+
             'callbackUrl' => $this->getNotifyUrl(),
             'amount' => $this->getAmount(),
             'currency' => $this->getCurrency(),
             'payerAlias' => $this->getPayerAlias(),
             'payeeAlias' => $this->getPayeeAlias(),
-        );
+            'message' => $this->getMessage(),
+        ];
 
         return $data;
     }
 
     public function sendData($data)
     {
-        // Guzzle HTTP Client createRequest does funny things when a GET request
-        // has attached data, so don't send the data if the method is GET.
+        $client = new Client(
+            [
+                'cert' => $this->getCert(),
+                'verify' => $this->getCaCert(),
+                'handler' => HandlerStack::create(new CurlHandler()),
+            ]
+        );
+        $options = [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ],
+        ];
+        $endpoint = $this->getEndpoint();
+
         if ($this->getHttpMethod() == 'GET') {
-            $client = new Client(
-                [
-                    'verify' => $this->getCaCert(),
-                    'cert' => $this->getCert(),
-                    'ssl_key' => $this->getPrivateKey(),
-                ]
-            );
-
-
-            $httpRequest = $client->request(
-                $this->getHttpMethod(),
-                $this->getEndpoint() . '?' . http_build_query($data),
-                array(
-                    'Content-type' => 'application/json',
-                ),
-                null,
-                array(
-                    'cert' => $this->getCert(),
-                    'ssl_key' => $this->getPrivateKey(),
-                    'verify' => $this->getCaCert(),
-                )
-            );
-        } else {
-            $client = new Client(
-                [
-                    'verify' => $this->getCaCert(),
-                    'cert' => $this->getCert(),
-                    'handler' => HandlerStack::create(new CurlHandler()),
-                ]
-            );
-
-
-            $httpRequest = $client->request(
-                $this->getHttpMethod(),
-                $this->getEndpoint(),
-                array(
-                    'Content-type' => 'application/json',
-                ),
-                json_encode($data),
-                array(
-                    'cert' => $this->getCert(),
-                    'ssl_key' => $this->getPrivateKey(),
-                    'verify' => $this->getCaCert(),
-                )
-            );
+            $endpoint .= '?' . http_build_query($data);
+        } elseif ($this->getHttpMethod() == 'PUT' || $this->getHttpMethod() == 'POST' ) {
+            $options['json'] = $data;
         }
 
         try {
-            $httpResponse = $httpRequest->send();
+            $response = $client->request(
+                $this->getHttpMethod(),
+                $endpoint,
+                $options
+            );
 
-            return $this->response = $this->createResponse($httpResponse);
-        } catch (ClientException $e) {
-            // don't throw exceptions for 4xx errors
+            return $this->response = $this->createResponse($response);
         } catch (\Exception $e) {
-            throw new InvalidResponseException(
-                'Error communicating with payment gateway: ' . $e->getMessage(),
-                $e->getCode()
+            // Extract the swish error code from the error message string recieved
+            $errorCodeKey = '"errorCode":"';
+            $errorMessageSubstring = substr($e->getMessage(), strpos($e->getMessage(), $errorCodeKey));
+            $swishErrorCode = substr($errorMessageSubstring, strlen($errorCodeKey), strpos($errorMessageSubstring, ',') - strlen($errorCodeKey) - 1);
+
+            dd($e);
+            throw new SwishException(
+                $swishErrorCode,
+                $e->getCode(),
             );
         }
     }

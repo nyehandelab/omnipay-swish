@@ -4,11 +4,13 @@ namespace Nyehandel\Omnipay\Swish\Message;
 
 class FetchTransactionRequest extends AbstractRequest
 {
+    protected $API_VERSION = 'v1';
+
     public function getData()
     {
         $this->validate('transactionReference');
 
-        return array();
+        return [];
     }
 
     protected function getHttpMethod()

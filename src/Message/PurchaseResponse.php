@@ -19,12 +19,12 @@ class PurchaseResponse extends AbstractResponse
 
     public function isSuccessful()
     {
-        return $this->getCode() == 200 || $this->getCode() == 201;
+        return $this->getCode() == 201;
     }
 
     public function getTransactionReference()
     {
-        $location = $this->response->getHeader('location');
+        $location = $this->response->getHeaderLine('location');
         if (!empty($location)) {
             $urlParts = explode('/', $location);
 
