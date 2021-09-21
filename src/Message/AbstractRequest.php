@@ -117,19 +117,16 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
 
     public function sendData($data)
     {
-        $client = new Client(
-            [
-                'cert' => $this->getCert(),
-                'verify' => $this->getCaCert(),
-                'handler' => HandlerStack::create(new CurlHandler()),
-            ]
-        );
+        $client = new Client();
         $options = [
             'headers' => [
-                'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ],
+            'cert' => $this->getCert(),
+            'ssl_key' => $this->getPrivateKey(),
+            'verify' => $this->getCaCert(),
         ];
+
         $endpoint = $this->getEndpoint();
 
         if ($this->getHttpMethod() == 'GET') {
@@ -145,6 +142,7 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
                 $options
             );
 
+
             return $this->response = $this->createResponse($response);
         } catch (\Exception $e) {
             // Extract the swish error code from the error message string recieved
@@ -152,7 +150,6 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
             $errorMessageSubstring = substr($e->getMessage(), strpos($e->getMessage(), $errorCodeKey));
             $swishErrorCode = substr($errorMessageSubstring, strlen($errorCodeKey), strpos($errorMessageSubstring, ',') - strlen($errorCodeKey) - 1);
 
-            dd($e);
             throw new SwishException(
                 $swishErrorCode,
                 $e->getCode(),
