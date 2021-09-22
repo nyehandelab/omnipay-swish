@@ -152,7 +152,7 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
 
             throw new SwishException(
                 $swishErrorCode,
-                $e->getCode(),
+                500,
             );
         }
     }
