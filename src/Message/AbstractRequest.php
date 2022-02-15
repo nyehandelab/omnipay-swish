@@ -61,16 +61,6 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
         return $this->getParameter('payerAlias');
     }
 
-    public function setPayerAlias($value)
-    {
-        return $this->setParameter('payerAlias', $value);
-    }
-
-    public function getPayeeAlias()
-    {
-        return $this->getParameter('payeeAlias');
-    }
-
     public function setMessage($value)
     {
         return $this->setParameter('message', $value);
@@ -86,6 +76,24 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
         return $this->setParameter('payeeAlias', $value);
     }
 
+    /*
+     *  This function generates a UUID for swish according to their specification, which is: ^[0-9A-F]{32}$
+     */
+    protected function generateRandString(): string
+    {
+
+        $randString = '';
+        while (strlen($randString) < 32) {
+            // generate a character between 0-9 a-f
+            $character = mt_rand(0,15);
+            if ($character > 9) $character += 7;
+            $randString .= chr($character + 48);
+        }
+
+        return $randString;
+    }
+
+
     protected function getHttpMethod()
     {
         return 'POST';
@@ -96,23 +104,6 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
         $url = $this->getTestMode() ? $this->testEndpoint : $this->liveEndpoint;
 
         return $url . '/' . $this->API_VERSION;
-    }
-
-    public function getData()
-    {
-        $this->validate('notifyUrl', 'amount', 'currency', 'payeeAlias');
-
-        $data = [
-
-            'callbackUrl' => $this->getNotifyUrl(),
-            'amount' => $this->getAmount(),
-            'currency' => $this->getCurrency(),
-            'payerAlias' => $this->getPayerAlias(),
-            'payeeAlias' => $this->getPayeeAlias(),
-            'message' => $this->getMessage(),
-        ];
-
-        return $data;
     }
 
     public function sendData($data)

@@ -4,6 +4,43 @@ namespace Nyehandel\Omnipay\Swish\Message;
 
 class PurchaseRequest extends AbstractRequest
 {
+    public function getData()
+    {
+        $this->validate('notifyUrl', 'amount', 'currency', 'payeeAlias');
+
+        $data = [
+            'payeeAlias' => $this->getPayeeAlias(),
+            'payerAlias' => $this->getPayerAlias(),
+            'amount' => $this->getAmount(),
+            'currency' => $this->getCurrency(),
+            'callbackUrl' => $this->getNotifyUrl(),
+            'message' => $this->getMessage(),
+            'payeePaymentReference' => $this->getPayeePaymentReference(),
+        ];
+
+        return $data;
+    }
+
+    public function setPayeeAlias($value)
+    {
+        return $this->setParameter('payeeAlias', $value);
+    }
+
+    public function getPayeeAlias()
+    {
+        return $this->getParameter('payeeAlias');
+    }
+
+    public function getPayeePaymentReference()
+    {
+        return $this->getParameter('payeePaymentReference');
+    }
+
+    public function setPayeePaymentReference($value)
+    {
+        return $this->setParameter('payeePaymentReference', $value);
+    }
+
     protected function getHttpMethod()
     {
         return 'PUT';
@@ -15,22 +52,4 @@ class PurchaseRequest extends AbstractRequest
 
         return parent::getEndpoint().'/paymentrequests/' . $instructionUUID;
     }
-
-    /*
-     *  This function generates a UUID for swish according to their specification, which is: ^[0-9A-F]{32}$
-     */
-    private function generateRandString(): string
-    {
-
-        $randString = '';
-        while (strlen($randString) < 32) {
-            // generate a character between 0-9 a-f
-            $character = mt_rand(0,15);
-            if ($character > 9) $character += 7;
-            $randString .= chr($character + 48);
-        }
-
-        return $randString;
-    }
-
 }
