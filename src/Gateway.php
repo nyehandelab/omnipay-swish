@@ -125,4 +125,9 @@ class Gateway extends AbstractGateway
     {
         return $this->createRequest('\Nyehandel\Omnipay\Swish\Message\FetchTransactionRequest', $parameters);
     }
+
+    public function refund(array $parameters = array())
+    {
+        return $this->createRequest('\Nyehandel\Omnipay\Swish\Message\RefundRequest', $parameters);
+    }
 }
