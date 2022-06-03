@@ -61,6 +61,11 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest
         return $this->getParameter('payerAlias');
     }
 
+    public function setPayerAlias($value)
+    {
+        return $this->setParameter('payerAlias', $value);
+    }
+
     public function setMessage($value)
     {
         return $this->setParameter('message', $value);
