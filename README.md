@@ -5,7 +5,7 @@
 [Omnipay](https://github.com/thephpleague/omnipay) is a framework agnostic, multi-gateway payment
 processing library for PHP. This package implements Stripe support for Omnipay.
 
-We have also developed a gateway for [Klarna]([https://github.com/dalholm/](https://github.com/dalholm/omnipay-klarna))
+We have also developed a gateway for [Klarna](https://github.com/dalholm/omnipay-klarna)
 
 ## Installation
 
