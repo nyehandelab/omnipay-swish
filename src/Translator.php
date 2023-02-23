@@ -9,7 +9,7 @@ class Translator
             // Errors on payment initialize
             'FF08' => 'Mottagarens betalningsreferens är ogiltig.',
             'RP03' => 'Sidan använder inte HTTPS.',
-            'BE18' => 'Betalarens alias är ogiltigt.',
+            'BE18' => 'Betalarens telefonnummer är ogiltigt.',
             'RP01' => 'Telefonnummer saknas eller är felaktigt formatterat.',
             'PA02' => 'Summan saknas eller är felaktigt formatterat.',
             'AM02' => 'Beloppet är för högt. Kontroller beloppgränsen hos din bank, samt att det finns teckning på ditt konto.',
